@@ -1,71 +1,71 @@
 # Apify Store Actors Scraper
 
-这个项目是一个使用Playwright和Python开发的网络爬虫，用于抓取[Apify商店](https://apify.com/store/categories)中的所有actors数据。
+This project is a web scraper developed with Playwright and Python to extract all actors' data from the [Apify Store](https://apify.com/store/categories).
 
-## 功能
+## Features
 
-- 自动滚动加载所有actors（共约4000+条记录）
-- 提取每个actor的详细信息：
-  - 标题
-  - Slug (URL标识符)
-  - 描述
-  - 作者名称
-  - 用户数
-  - 评分
-- 将抓取的数据保存为CSV文件
+- Automatically scrolls to load all actors (approximately 4000+ records in total)
+- Extracts detailed information for each actor:
+  - Title
+  - Slug (URL identifier)
+  - Description
+  - Author name
+  - Number of users
+  - Rating
+- Saves the scraped data as a CSV file
 
-## 环境要求
+## Requirements
 
 - Python 3.8+
 - Playwright
 - Pandas
-- 其他依赖库（见`requirements.txt`）
+- Other dependencies (see `requirements.txt`)
 
-## 安装
+## Installation
 
-1. 克隆本仓库：
+1. Clone this repository:
 ```bash
 git clone <repository-url>
 cd apify
 ```
 
-2. 安装依赖：
+2. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. 安装Playwright浏览器：
+3. Install Playwright browsers:
 ```bash
 playwright install
 ```
 
-## 使用方法
+## Usage
 
-直接运行脚本开始抓取：
+Run the script to start scraping:
 
 ```bash
 python scrape_actors.py
 ```
 
-脚本将自动：
-1. 打开浏览器访问Apify商店
-2. 滚动页面直到加载所有actors
-3. 提取所有actors的数据
-4. 保存为`apify_actors.csv`文件
+The script will automatically:
+1. Open a browser and navigate to the Apify Store
+2. Scroll the page until all actors are loaded
+3. Extract data from all actors
+4. Save the data to an `apify_actors.csv` file
 
-## 输出示例
+## Output Example
 
-生成的CSV文件包含以下字段：
-- `title`: Actor标题
-- `slug`: Actor的唯一标识符
-- `description`: Actor的描述
-- `author`: 作者名称
-- `users`: 用户数
-- `rating`: 评分
-- `url`: Actor的URL
+The generated CSV file contains the following fields:
+- `title`: Actor title
+- `slug`: Unique identifier for the actor
+- `description`: Actor description
+- `author`: Author name
+- `users`: Number of users
+- `rating`: Rating
+- `url`: Actor URL
 
-## 注意事项
+## Notes
 
-- 爬虫使用无头浏览器模式运行，过程中会显示浏览器界面
-- 完整抓取过程可能需要几分钟时间，取决于网络速度和总记录数
-- 脚本包含自动检测，当连续多次滚动没有加载新内容时，将自动停止抓取
+- The scraper runs in headed browser mode, showing the browser interface during the process
+- The complete scraping process may take several minutes, depending on network speed and total number of records
+- The script includes automatic detection to stop scraping when no new content is loaded after multiple scrolls

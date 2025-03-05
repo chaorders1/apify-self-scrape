@@ -22,6 +22,7 @@ import pandas as pd
 from typing import List, Dict, Any
 import logging
 import re
+import os
 
 # 配置日志
 logging.basicConfig(
@@ -297,6 +298,27 @@ async def main():
     """
     主函数
     """
+    # 检查是否存在apify_actors.csv文件
+    csv_filename = 'apify_actors.csv'
+    if os.path.exists(csv_filename):
+        logger.info(f"发现已存在的数据文件 {csv_filename}，正在加载...")
+        try:
+            df = pd.read_csv(csv_filename)
+            actors = df.to_dict('records')
+            logger.info(f"成功从文件加载了 {len(actors)} 个actors记录")
+            
+            # 显示数据摘要
+            logger.info("\n数据摘要:")
+            print(df.head().to_string())  # 使用print显示表格，logger会破坏格式
+            logger.info(f"\n总共加载了 {len(df)} 条记录")
+            return actors
+        except Exception as e:
+            logger.error(f"加载CSV文件时发生错误: {str(e)}")
+            logger.info("将开始网络抓取流程...")
+    else:
+        logger.info(f"未找到数据文件 {csv_filename}，将开始网络抓取流程...")
+    
+    # 如果没有找到文件或加载失败，则执行原有的抓取流程
     logger.info("开始抓取Apify商店中的actors...")
     start_time = time.time()
     
@@ -315,11 +337,13 @@ async def main():
         logger.info("\n数据摘要:")
         print(df.head().to_string())  # 使用print显示表格，logger会破坏格式
         logger.info(f"\n总共抓取了 {len(df)} 条记录")
+    
+    return actors
 
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        actors = asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("用户中断了抓取过程")
         
@@ -332,5 +356,5 @@ if __name__ == "__main__":
         except Exception as save_error:
             logger.error(f"保存中断数据时出错: {str(save_error)}")
     except Exception as e:
-        logger.error(f"抓取过程中发生错误: {str(e)}")
+        logger.error(f"程序执行过程中发生错误: {str(e)}")
         raise 

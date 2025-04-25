@@ -102,7 +102,8 @@ async def scrape_actors() -> List[Dict[str, Any]]:
         
         # 尝试获取预期的actors总数
         logger.info("尝试获取总数...")
-        total_count = 4047  # 使用默认值，如果无法从页面获取
+        total_count = None  # 初始化为 None，不再硬编码
+        extracted_count_str = "未知"
         
         try:
             # 尝试获取显示总数的元素
@@ -111,22 +112,27 @@ async def scrape_actors() -> List[Dict[str, Any]]:
             if matches:
                 total_count_str = matches[0].replace(',', '')
                 total_count = int(total_count_str)
+                extracted_count_str = str(total_count)
                 logger.info(f"从页面文本中提取到总数: {total_count}")
+            else:
+                logger.warning("未能从页面文本中提取到总数。")
         except Exception as e:
             logger.error(f"获取总数时出错: {str(e)}")
-            logger.info(f"使用默认总数: {total_count}")
+            logger.warning("无法提取总数。")
         
-        logger.info(f"预期抓取的actors总数: {total_count}")
+        logger.info(f"预期抓取的actors总数 (供参考): {extracted_count_str}")
         
         # 存储抓取到的actors
         actors = []
         previously_loaded_count = 0
         no_new_items_count = 0
-        max_attempts = 350  # 设置为350次，每次约15个，最多可获取约5000多个条目
+        no_new_items_threshold = 15  # 增加连续无新内容加载的阈值
+        max_attempts = 350
         attempt = 0
+        loop_termination_reason = "达到最大尝试次数" # Default reason
         
         logger.info("开始滚动页面加载所有actors...")
-        while len(actors) < total_count and attempt < max_attempts:
+        while attempt < max_attempts:
             attempt += 1
             
             # 渐进式滚动，更像人类行为
@@ -141,9 +147,10 @@ async def scrape_actors() -> List[Dict[str, Any]]:
             # 检查是否有新内容加载
             if current_card_count == previously_loaded_count:
                 no_new_items_count += 1
-                if no_new_items_count >= 5:  # 增加到5次，给更多机会加载
-                    logger.info(f"连续5次滚动没有加载新内容，尝试其他方法...")
-                    
+                logger.info(f"连续 {no_new_items_count}/{no_new_items_threshold} 次滚动没有加载新内容...")
+
+                if no_new_items_count >= 5: # 保留原有5次后的交互逻辑
+                    logger.info(f"尝试模拟交互以触发加载...")
                     # 随机移动鼠标，更像人类行为
                     x = random.randint(100, 1000)
                     y = random.randint(100, 600)
@@ -171,11 +178,11 @@ async def scrape_actors() -> List[Dict[str, Any]]:
                                     await pagination_next.click()
                                     await random_sleep(2, 4)
                                     no_new_items_count = 0  # 重置计数器
-                                # 如果多次尝试后仍无法加载更多，则可能达到了网站限制
-                                elif no_new_items_count >= 10:
-                                    logger.info(f"连续10次尝试没有加载新内容，停止抓取。")
-                                    logger.info(f"已加载 {current_card_count} 个actors，总计 {total_count} 个。")
-                                    break
+                                # 如果多次尝试后仍无法加载更多
+                                if no_new_items_count >= no_new_items_threshold:
+                                    logger.info(f"连续 {no_new_items_threshold} 次尝试没有加载新内容，停止抓取。")
+                                    loop_termination_reason = f"连续{no_new_items_threshold}次无新项目"
+                                    break # 跳出主循环
                         except Exception as e:
                             logger.error(f"尝试加载更多内容时出错: {str(e)}")
             else:
@@ -262,8 +269,12 @@ async def scrape_actors() -> List[Dict[str, Any]]:
             # 如果已经达到最大尝试次数，确保保存最终结果
             if attempt >= max_attempts:
                 logger.info(f"已达到最大尝试次数 {max_attempts}，停止抓取")
-                break
+                loop_termination_reason = f"达到最大尝试次数 ({max_attempts})"
+                break # 虽然循环条件会处理，显式break更清晰
         
+        # 添加循环终止原因日志
+        logger.info(f"滚动循环结束，原因: {loop_termination_reason}")
+
         # 关闭浏览器前确保数据被保存
         if actors:
             final_temp_filename = f"apify_actors_final_{len(actors)}.csv"
